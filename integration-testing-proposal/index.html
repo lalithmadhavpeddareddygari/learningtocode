@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Integration Testing for Embedded Coder Code Efficiency</title>
+  <style>
+    :root {
+      --navy: #0b2c4a;
+      --navy-2: #143d63;
+      --orange: #e87722;
+      --teal: #0d7a86;
+      --ink: #1c2430;
+      --muted: #5b6775;
+      --line: #d5dee8;
+      --off: #f6f8fb;
+      --white: #fff;
+      --green: #1f8a5b;
+      --red: #c0392b;
+      --gold: #c48a1a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #0a1f33; color: var(--ink); font-family: Calibri, "Segoe UI", system-ui, sans-serif; }
+    #stage { height: 100%; display: flex; flex-direction: column; }
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px; background: #07182a; color: #c9d7e5; font-size: 13px;
+    }
+    .toolbar button {
+      background: var(--navy-2); color: #fff; border: 0; padding: 6px 12px;
+      border-radius: 6px; cursor: pointer; margin-left: 6px;
+    }
+    .toolbar button:hover { background: var(--orange); }
+    #viewport {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      overflow: hidden; padding: 12px;
+    }
+    .slide {
+      display: none; width: 1280px; height: 720px; background: var(--off);
+      color: var(--ink); position: relative; overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35); border-radius: 4px;
+    }
+    .slide.active { display: block; }
+    .bar { position: absolute; top: 0; left: 0; right: 0; height: 96px; background: var(--navy); }
+    .bar .accent { position: absolute; bottom: -6px; left: 0; right: 0; height: 6px; background: var(--orange); }
+    .bar h1 { margin: 22px 40px 0; color: #fff; font-size: 30px; font-weight: 700; }
+    .bar p { margin: 6px 40px 0; color: #c9d7e5; font-size: 15px; }
+    .foot {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 28px;
+      background: var(--navy); color: #fff; font-size: 11px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+    }
+    .body { position: absolute; top: 114px; left: 0; right: 0; bottom: 28px; padding: 18px 36px 12px; }
+    .title-slide { background: var(--navy); color: #fff; }
+    .title-slide .stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 14px; background: var(--orange); }
+    h2 { margin: 0 0 8px; }
+    .muted { color: var(--muted); }
+    .grid { display: grid; gap: 14px; }
+    .g2 { grid-template-columns: 1fr 1fr; }
+    .g3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 10px;
+      padding: 16px 18px; position: relative;
+    }
+    .card h3 { margin: 0 0 8px; color: var(--navy); font-size: 18px; }
+    .card p, .card li { font-size: 15px; line-height: 1.4; color: var(--muted); margin: 0; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+    .kicker { color: var(--orange); font-weight: 700; letter-spacing: .06em; font-size: 14px; }
+    .pyramid { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 8px; }
+    .pyr {
+      color: #fff; font-weight: 700; text-align: center; padding: 16px 12px;
+      border-radius: 8px; font-size: 14px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    th { background: var(--navy); color: #fff; text-align: left; padding: 8px 10px; }
+    td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    tr:nth-child(even) td { background: #eef3f8; }
+    .tag { display: inline-block; background: var(--orange); color: #fff; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+    .layer-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; margin-bottom: 12px; }
+    .layer-lab { color: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; padding: 12px; }
+    .notes {
+      display: none; background: #111; color: #ddd; padding: 10px 16px; font-size: 13px; max-height: 140px; overflow: auto;
+    }
+    .notes.on { display: block; }
+    a { color: inherit; }
+  </style>
+</head>
+<body>
+<div id="stage">
+  <div class="toolbar">
+    <div>Embedded Coder · Code Efficiency · Integration Testing Proposal · Internal</div>
+    <div>
+      <span id="counter">1 / 20</span>
+      <button type="button" id="prev">Prev</button>
+      <button type="button" id="next">Next</button>
+      <button type="button" id="notesBtn">Speaker notes</button>
+    </div>
+  </div>
+  <div id="viewport"></div>
+  <div class="notes" id="notes"></div>
+</div>
+
+<template id="slides-data"></template>
+<script>
+const slides = [
+  {
+    notes: "Open by stating the ask: not “should we do integration testing” but “what should it mean for a code generator efficiency team so we stop using SIL as the default oracle.” Keep to 40–45 minutes.",
+    html: `
+    <section class="slide title-slide active">
+      <div class="stripe"></div>
+      <div style="padding:140px 70px 0 70px;">
+        <div class="kicker">QUALITY ENGINEERING  ·  MARKET RESEARCH + PROPOSAL</div>
+        <h1 style="font-size:46px;line-height:1.15;margin:16px 0 24px;">Integration Testing for<br>Embedded Coder Code Efficiency</h1>
+        <p style="font-size:20px;color:#d5e2ee;max-width:980px;">How industry teams test compiler-class products in the middle of the pyramid — and a practical proposal so we stop paying full codegen + SIL cost for every defect class.</p>
+        <p style="margin-top:90px;color:#a8bbcc;">Audience: Code Efficiency Dev Manager  ·  Prepared by QE<br>Internal use  ·  September 2026</p>
+      </div>
+    </section>`
+  },
+  {
+    notes: "Make the pain concrete if you can: current SIL pack duration, how long localization takes. The fourth card is the contract for the rest of the talk.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>The problem we are being asked to solve</h1><p>Why this research exists</p><div class="accent"></div></div>
+      <div class="body" style="display:grid;gap:12px;">
+        ${[
+          ["System tests are our default oracle","Most confidence today comes from full model → codegen → compile → SIL (and sometimes profiling). Right for numerical equivalence. Wrong as the first test for every optimization, IR, or plumbing change."],
+          ["Feedback is too late and too expensive","Industry data is consistent: system tests are minutes-to-hours, high maintenance, and poor at localizing the failing component."],
+          ["Code Efficiency is especially exposed","Our defects are often copies, buffer reuse, inlining, SIMD, stack, ROM/RAM, transform interactions — not “does the model still simulate.”"],
+          ["Ask of this deck","A market-informed definition of integration testing for our product, and a proposal we can pilot without replacing system tests."]
+        ].map(([t,b]) => `<div class="card" style="border-left:6px solid var(--orange);"><h3>${t}</h3><p>${b}</p></div>`).join("")}
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>2 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Agenda is a map. Promise the decision at the end is Phase 0–1 only, not a rewrite of the suite.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Agenda</h1><p>40–45 minutes, including discussion</p><div class="accent"></div></div>
+      <div class="body grid g3" style="grid-template-rows:1fr 1fr;">
+        ${[
+          ["01","Context","Team charter and current test shape"],
+          ["02","Market research","How industry defines and funds integration testing"],
+          ["03","Analogues","Compilers (LLVM/GCC/TI) and automotive MBD"],
+          ["04","Gap analysis","What our SIL-heavy suite covers — and misses"],
+          ["05","Proposal","Integration layer, CI policy, and pilot"],
+          ["06","Decision","What I need from you to start"]
+        ].map(([n,t,d]) => `<div class="card"><div class="kicker">${n}</div><h3>${t}</h3><p>${d}</p></div>`).join("")}
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>3 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Tie testing to charter. Efficiency work has three oracles: structure, metrics, legality. SIL only cheaply covers legality via numerics.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Team context: Code Efficiency</h1><p>What we own, and therefore what we must test</p><div class="accent"></div></div>
+      <div class="body">
+        <div class="grid g3">
+          <div class="card"><h3>Generated-code efficiency</h3><p>Buffer reuse, expression folding, inlining, loop transforms, SIMD, parallel for, saturation/protection stripping — ROM, RAM, copies, stack, time.</p></div>
+          <div class="card"><h3>Codegen workflows & infra</h3><p>Objectives, Code Generation Advisor, static metrics, reports, traceability, productivity tools on the codegen path.</p></div>
+          <div class="card"><h3>Engineering quality</h3><p>Regression signal, localization, and preventing optimization-vs-correctness regressions in codegen products.</p></div>
+        </div>
+        <div class="card" style="margin-top:16px;"><p style="color:var(--ink);font-size:16px;">Implication: a test that only asks “SIL matches Normal mode” is necessary but not sufficient. Efficiency work also needs oracles for structure (did the transform fire?), metrics (did ROM/RAM/stack move the right way?), and legality (did we keep semantics?).</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>4 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Inverted pyramid / ice-cream cone. We keep SIL; we stop writing it first.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Current test shape: an inverted pyramid</h1><p>Not a people problem — a layering problem</p><div class="accent"></div></div>
+      <div class="body">
+        <div class="pyramid">
+          <div class="pyr" style="width:70%;background:var(--red);">SYSTEM  ·  Full codegen + compile + SIL / PIL  ·  minutes–hours</div>
+          <div class="pyr" style="width:48%;background:var(--gold);">INTEGRATION  ·  Thin / informal today  ·  the missing middle</div>
+          <div class="pyr" style="width:28%;background:var(--green);">UNIT  ·  Isolated transforms  ·  fast</div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <ul>
+            <li>Industry target mix (Google SWE book): ~80% small/unit, ~15% medium/integration, ~5% large/E2E.</li>
+            <li>A SIL-heavy suite behaves like an ice-cream cone: slow, brittle, expensive to diagnose.</li>
+            <li>Keep SIL. Stop using it as the first test we write for every Code Efficiency change.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>5 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Table is the definition slide. Integration is a defect class (interfaces), not a smaller E2E.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>What industry means by integration testing</h1><p>A distinct defect class — not a smaller system test</p><div class="accent"></div></div>
+      <div class="body">
+        <table>
+          <tr><th></th><th>Unit</th><th>Integration</th><th>System / E2E</th></tr>
+          <tr><td><b>Question</b></td><td>Does this function do the right thing in isolation?</td><td>Do two or more real components honor their interface?</td><td>Does the whole product journey still work?</td></tr>
+          <tr><td><b>Defect class</b></td><td>Logic, local invariant</td><td>Contracts, data flow, miswired stages, config</td><td>Emergent behavior, environment, full workflow</td></tr>
+          <tr><td><b>Typical time</b></td><td>ms–seconds</td><td>seconds–low minutes</td><td>minutes–hours</td></tr>
+          <tr><td><b>Owner mix</b></td><td>Dev-primary</td><td>Dev + QE together</td><td>QE-primary, sparse</td></tr>
+          <tr><td><b>Oracle</b></td><td>Values / mocks</td><td>Boundary artifacts</td><td>Customer-visible outcome</td></tr>
+        </table>
+        <p class="muted" style="margin-top:12px;">Fowler / Microsoft: keep integration tests narrow. If a test needs the whole stack, it is a system test wearing an integration-test name.</p>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>6 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Four independent sources converge. Compiler line is the bridge to our product.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Industry consensus (2024–2026)</h1><p>Same advice, different companies</p><div class="accent"></div></div>
+      <div class="body" style="display:grid;gap:10px;">
+        <div class="card"><h3>Google (SWE book)</h3><p>Classify tests by size (small / medium / large) and by scope. Aim ~80 / 15 / 5. Write the smallest test that can fail for that behavior.</p></div>
+        <div class="card"><h3>Microsoft (Well-Architected)</h3><p>Unit on every commit. Integration when components interact. E2E only for a few critical journeys. Gate the pipeline on cheaper layers first.</p></div>
+        <div class="card"><h3>ISTQB / test-level guides</h3><p>Integration owns interfaces. System owns the fully integrated product against requirements. Different owners, environments, oracles.</p></div>
+        <div class="card"><h3>Compiler industry</h3><p>Do not wait for whole-program execution to find a bad transform. Lit/FileCheck-style tests prove a stage produced the expected IR/code.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>7 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "LLVM lit+FileCheck is the pattern we should steal. Whole-program suite is their SIL analogue.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Analogue 1: how compiler vendors test</h1><p>LLVM, GCC, TI — the closest technical cousins</p><div class="accent"></div></div>
+      <div class="body">
+        <ol style="font-size:16px;line-height:1.45;color:var(--ink);">
+          <li><b>LLVM unit tests</b> — hermetic, before commit.</li>
+          <li><b>lit + FileCheck</b> — tiny IR/source, CHECK expected patterns in generated IR/asm. Seconds. Localizes to a pass. Gold standard for codegen integration tests.</li>
+          <li><b>llvm-test-suite</b> — whole programs, reference outputs, compile time, size, runtime. Closer to our SIL + metrics. Second net, not first.</li>
+          <li><b>TI / commercial</b> — conformance suites + kernels + apps + bug regressions. Kernels are a model for optimization micro-fixtures.</li>
+          <li><b>Fuzz / differential</b> — Csmith, GraphicsFuzz, CompFuzzCI on PRs. Complementary later; not the first pilot.</li>
+        </ol>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>8 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Important distinction: customer SIL verifies generated code vs model. Our SIL verifies the code generator. Same mechanism, different SUT.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Analogue 2: automotive MBD & codegen QA</h1><p>How the market around Embedded Coder tests generated code</p><div class="accent"></div></div>
+      <div class="body grid g2">
+        <div class="card"><h3>Customers (our users)</h3><p>MIL → SIL → PIL back-to-back, often ISO 26262. Simulink Test, SIL/PIL Manager, BTC, EverTest. Their SIL is product verification of generated code. Ours is product verification of the generator.</p></div>
+        <div class="card"><h3>dSPACE TargetLink + BTC</h3><p>Harness extraction, requirements tests, auto vectors, MIL/SIL/PIL, Jenkins. Migration suites compare tool versions — copy this internally when optimizers change.</p></div>
+        <div class="card"><h3>Ford / CRL (public BTC)</h3><p>Hundreds of library routines, multiple MATLAB releases, Jenkins. Tests at the library-function boundary, not a full vehicle SIL.</p></div>
+        <div class="card"><h3>MathWorks product guidance</h3><p>Advisor + static metrics for efficiency; SIL/PIL profiling for timing. The product already splits static structure from dynamic execution. Tests should too.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>9 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Give the team a shared vocabulary. Medium = our integration layer.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Mapping industry layers onto Embedded Coder</h1><p>Name the layers in our vocabulary so the team can use them</p><div class="accent"></div></div>
+      <div class="body">
+        <table>
+          <tr><th>Google size</th><th>Our name</th><th>What it actually runs</th><th>When</th></tr>
+          <tr><td>Small</td><td>Unit</td><td>One transform, cost model, or API with fakes. Avoid Simulink engine if possible.</td><td>Every CL / presubmit</td></tr>
+          <tr><td>Medium</td><td>Integration</td><td>Minimal model or IR fixture → real codegen through N stages. Assert IR, C, metrics, or compile. Stop before SIL unless the defect class needs execution.</td><td>Every CL if fast; else gated + merge</td></tr>
+          <tr><td>Large</td><td>System</td><td>Representative models, full codegen, compile, SIL/PIL, equivalence, profiling.</td><td>Nightly / pre-release / smoke</td></tr>
+          <tr><td>Huge / soak</td><td>Qualification & fuzz</td><td>Conformance, random models, version-to-version migration, long-tail targets.</td><td>Scheduled / milestone</td></tr>
+        </table>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>10 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "This is the QE insight: match oracle to defect class. Pause for examples from the team.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Gap analysis for Code Efficiency</h1><p>SIL is a great system test. It is an expensive integration test.</p><div class="accent"></div></div>
+      <div class="body">
+        <div class="grid g2">
+        <div class="card" style="border-top:8px solid var(--red);">
+          <h3>SIL is a weak / late detector for…</h3>
+          <ul>
+            <li>A copy was not eliminated, but numbers still match</li>
+            <li>An optimization did not fire</li>
+            <li>Two passes interact and undo each other</li>
+            <li>Static metrics / report plumbing broke</li>
+            <li>C still compiles but structure regressed</li>
+            <li>A config objective mapped to the wrong flags</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:8px solid var(--green);">
+          <h3>Keep SIL as the detector for…</h3>
+          <ul>
+            <li>Numerical mismatch vs Normal / MIL</li>
+            <li>Runtime crash, timeout, stack overflow</li>
+            <li>Profiling on a representative model</li>
+            <li>Target / toolchain / PIL issues</li>
+            <li>Emergent behavior across referenced models</li>
+            <li>Customer-visible codegen + verify workflow</li>
+          </ul>
+        </div>
+        </div>
+        <p style="margin:12px 0 0;font-size:15px;color:var(--ink);">Principle: efficiency bugs are mostly structural and metric. Correctness still needs execution. Do not force one oracle to serve both.</p>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>11 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Star Layer 2. Investment, not a rename of SIL.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Proposal: a four-layer strategy</h1><p>Integration is Layer 2 — new investment, not a rename of SIL</p><div class="accent"></div></div>
+      <div class="body">
+        ${[
+          ["L1 Unit","Existing + grow","Transform unit tests, cost models, config mapping, report parsers. No model load when possible.","var(--green)"],
+          ["L2 Integration ★","New focus","Four families: snapshots, pipeline contracts, static metric contracts, host-compile kernels. No SIL by default.","var(--orange)"],
+          ["L3 System smoke","Shrink & curate","Small stable SIL pack per optimization area. Merge / nightly, not every local save.","var(--teal)"],
+          ["L4 System deep","Keep, schedule","Broad models, PIL, profiling, last-release migration. Nightly / weekly.","var(--navy)"]
+        ].map(([a,b,c,col]) => `<div class="layer-row"><div class="layer-lab" style="background:${col}">${a}<br><span style="font-weight:500;font-size:13px">${b}</span></div><div class="card"><p style="color:var(--ink)">${c}</p></div></div>`).join("")}
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>12 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Start with A+C because we already emit C and static metrics. B needs IR dumps. D is a small host run, still cheaper than SIL Manager.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Layer 2 in detail: four integration families</h1><p>Start with A+C. Add B and D once the harness exists.</p><div class="accent"></div></div>
+      <div class="body grid g2">
+        <div class="card"><h3>A. Snapshot / FileCheck</h3><p>Tiny models or IR. Generate C (or dump IR). Match stable patterns: reuse of a buffer, absence of memcpy, SIMD intrinsic, inlined callee gone. Auto-update goldens with review.</p></div>
+        <div class="card"><h3>B. Pipeline contracts</h3><p>Assert stage handoff: compile → IR → optimized IR → emit → compile. Failure names the pass, not “SIL mismatch.”</p></div>
+        <div class="card"><h3>C. Metric contracts</h3><p>Use static code metrics (ROM/RAM/stack/lines/globals). Assert bounds or deltas vs a fixture baseline. No execution.</p></div>
+        <div class="card"><h3>D. Kernel compile+run</h3><p>Hot loops: generate, host-compile, tiny driver with known I/O. Cheaper than SIL Manager + SDI. Closest to LLVM/TI kernels.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>13 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Walk this example slowly. It is how you want reviews to think.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Worked example: buffer reuse change</h1><p>Same feature, three test designs — only one belongs in SIL</p><div class="accent"></div></div>
+      <div class="body" style="display:grid;gap:12px;">
+        <div class="card"><h3>Unit (minutes to write, ms to run)</h3><p>Non-overlapping live ranges share storage. Table-driven sizes, dimensions, Reusable storage class, Model-block outputs.</p></div>
+        <div class="card"><h3>Integration A+C (seconds)</h3><p>3-block fixture. Generate. CHECK: one local, no extra memcpy. Metric: RAM/stack bounds. Compile C. Stop.</p></div>
+        <div class="card"><h3>System SIL (keep 1–2)</h3><p>One representative referenced-model, Normal vs SIL, plus metrics trend. Not 40 permutations of the same reuse rule.</p></div>
+        <div class="card"><p style="color:var(--ink);font-size:16px;"><b>Review rule:</b> if the expected failure cannot name the pass or the metric, the test is too big.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>14 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Google TAP: volume × commit rate. Flaky L3/L4 get disabled with an owner.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>When tests run (CI policy)</h1><p>Speed of the suite is a product requirement, not a luxury</p><div class="accent"></div></div>
+      <div class="body">
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="card"><h3>Local / presubmit</h3><p>L1 + affected L2 (A/C). Minutes. Hermetic. No SIL.</p></div>
+          <div class="card"><h3>Merge / gated CI</h3><p>Full L2 for the component + tiny L3 smoke. Fail the merge.</p></div>
+          <div class="card"><h3>Nightly</h3><p>Remaining L3 + L4, profiling set, last-release migration fixtures.</p></div>
+          <div class="card"><h3>Milestone</h3><p>Broader targets, PIL sample, qualification evidence if needed.</p></div>
+        </div>
+        <div class="card" style="margin-top:14px;"><h3>Selection, not “run everything”</h3><p>A buffer-reuse change should not wait on SIMD SIL. Tests live next to the pass. Impacted-test selection where the build system allows.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>15 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "This is the operational plan. Recommend buffer reuse/copies as first family if SIMD SIL is especially slow.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Pilot plan (QE-led, Dev-paired)</h1><p>Prove the middle layer on one optimization family before a platform bet</p><div class="accent"></div></div>
+      <div class="body">
+        ${[
+          ["Phase 0  Align","Pick one family (buffer reuse / copies, or SIMD). Inventory SIL tests that only detect “optimization didn’t fire.” Agree oracles: patterns + static metrics."],
+          ["Phase 1  Harness","Minimal runner: fixture → codegen → dump C/IR/metrics → match. One command, CI-able, artifact on fail. No SIL in the harness."],
+          ["Phase 2  Seed suite","20–40 fixtures, including historical bugs. Convert 5–10 slow system tests into L2; keep 2 SIL sentinels."],
+          ["Phase 3  Policy","Presubmit = L2 for that folder. Measure time, defects before SIL, golden noise. Then replicate."]
+        ].map(([t,b]) => `<div class="layer-row"><div class="layer-lab" style="background:var(--navy)">${t}</div><div class="card"><p style="color:var(--ink)">${b}</p></div></div>`).join("")}
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>16 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Ask the manager to freeze 2–3 metrics in Phase 0 so the pilot cannot be argued anecdotally later.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>How we will know it worked</h1><p>Pilot success metrics — discuss and freeze in Phase 0</p><div class="accent"></div></div>
+      <div class="body grid g3">
+        <div class="card"><h3>Feedback time</h3><p>L2 pack in minutes vs current SIL pack.</p></div>
+        <div class="card"><h3>Defects shifted left</h3><p>Bugs/injected faults caught by L2 that previously needed SIL.</p></div>
+        <div class="card"><h3>Localization</h3><p>Red to blamed pass/file. Named fixture + check, not a 20-minute log.</p></div>
+        <div class="card"><h3>SIL diet</h3><p>Redundant system tests retired without increasing escaped defects.</p></div>
+        <div class="card"><h3>Golden hygiene</h3><p>Justified snapshot updates vs noisy churn. Tighten CHECK patterns.</p></div>
+        <div class="card"><h3>Dev adoption</h3><p>New optimization CLs include L2 tests by default. QE reviews test level.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>17 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Pre-empt “goldens are brittle” and “we already have system tests.” Bounded experiment.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Risks and how we contain them</h1><p>Integration tests fail in predictable ways — plan for them</p><div class="accent"></div></div>
+      <div class="body grid g2">
+        <div class="card"><h3>Goldens become change detectors</h3><p>CHECK patterns, not whole-file diffs. Review updates like code.</p></div>
+        <div class="card"><h3>SIL in disguise</h3><p>Harness forbids SIL/PIL APIs in L2. Time budget. “Can this fail without executing generated code?”</p></div>
+        <div class="card"><h3>False confidence</h3><p>Sentinel SIL per family. L2 is never the only numerical oracle for a pass that can change values.</p></div>
+        <div class="card"><h3>Fixture bit-rot</h3><p>Own fixtures next to the pass. Treat as product code.</p></div>
+        <div class="card"><h3>Tooling cost</h3><p>Thin MATLAB/Python runner. Reuse static metrics and existing codegen APIs.</p></div>
+        <div class="card"><h3>Org inertia</h3><p>Pilot one family with before/after numbers. No suite rewrite up front.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>18 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Stop talking and ask for Phase 0–1. Name a Dev counterpart. Do not leave with “interesting, let’s think.”",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Recommendation and ask</h1><p>What I need from you to start</p><div class="accent"></div></div>
+      <div class="body">
+        <div class="card" style="margin-bottom:14px;"><p style="color:var(--navy);font-size:18px;font-weight:700;">Fund a Code Efficiency integration-test layer, piloted on one optimization family, rather than scaling SIL further.</p></div>
+        <ul style="font-size:17px;line-height:1.55;">
+          <li>Endorse Unit / Integration / System smoke / System deep as shared review language.</li>
+          <li>Name a Dev counterpart for Phase 0–1 and pick the family (buffer reuse/copies vs SIMD).</li>
+          <li>Allow QE to propose retiring SIL cases once L2 covers the defect class — sentinel SIL retained.</li>
+          <li>Protect harness time as engineering work, not side-of-desk test writing.</li>
+          <li>If metrics look good, replicate; if not, stop. Bounded experiment.</li>
+        </ul>
+        <div class="card" style="margin-top:12px;border-left:6px solid var(--teal);"><p style="color:var(--ink);font-size:17px;"><b>Decision today:</b> approve Phase 0–1 on one family. Everything else waits on those numbers.</p></div>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>19 / 20</span></div>
+    </section>`
+  },
+  {
+    notes: "Leave this up during Q&A. Sources are auditable if challenged.",
+    html: `
+    <section class="slide">
+      <div class="bar"><h1>Sources (selected)</h1><p>So the research is auditable</p><div class="accent"></div></div>
+      <div class="body">
+        <ul style="font-size:15px;line-height:1.55;">
+          <li>Google, <i>Software Engineering at Google</i>, Ch. 11 & 14 — small/medium/large, ~80/15/5.</li>
+          <li>Microsoft Learn, Azure Well-Architected testing strategies; pipeline gates.</li>
+          <li>Martin Fowler on integration-test scope; ISTQB test levels.</li>
+          <li>LLVM Testing Infrastructure Guide; FileCheck; llvm-test-suite.</li>
+          <li>TI compiler validation (Plum Hall, SuperTest, kernels, applications).</li>
+          <li>Donaldson et al. GraphicsFuzz/gfauto; CompFuzzCI (Dafny/Amazon).</li>
+          <li>MathWorks Embedded Coder: SIL/PIL Manager, static metrics, efficiency techniques, profiling.</li>
+          <li>BTC EmbeddedTester / dSPACE TargetLink; Ford CRL+Jenkins; EverTest.</li>
+        </ul>
+      </div>
+      <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>20 / 20</span></div>
+    </section>`
+  }
+];
+
+const viewport = document.getElementById("viewport");
+const notesEl = document.getElementById("notes");
+const counter = document.getElementById("counter");
+let i = Math.max(0, Math.min(slides.length - 1, parseInt(new URLSearchParams(location.search).get("s") || "1", 10) - 1 || 0));
+function render() {
+  viewport.innerHTML = slides[i].html;
+  viewport.querySelector(".slide")?.classList.add("active");
+  notesEl.textContent = "Notes: " + slides[i].notes;
+  counter.textContent = (i + 1) + " / " + slides.length;
+  const u = new URL(location.href);
+  u.searchParams.set("s", String(i + 1));
+  history.replaceState(null, "", u);
+}
+document.getElementById("prev").onclick = () => { i = (i + slides.length - 1) % slides.length; render(); };
+document.getElementById("next").onclick = () => { i = (i + 1) % slides.length; render(); };
+document.getElementById("notesBtn").onclick = () => notesEl.classList.toggle("on");
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); i = (i + 1) % slides.length; render(); }
+  if (e.key === "ArrowLeft") { i = (i + slides.length - 1) % slides.length; render(); }
+});
+render();
+</script>
+</body>
+</html>
