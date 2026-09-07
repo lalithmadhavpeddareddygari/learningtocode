@@ -276,7 +276,8 @@ const slides = [
     html: `
     <section class="slide">
       <div class="bar"><h1>Gap analysis for Code Efficiency</h1><p>SIL is a great system test. It is an expensive integration test.</p><div class="accent"></div></div>
-      <div class="body grid g2">
+      <div class="body">
+        <div class="grid g2">
         <div class="card" style="border-top:8px solid var(--red);">
           <h3>SIL is a weak / late detector for…</h3>
           <ul>
@@ -299,8 +300,9 @@ const slides = [
             <li>Customer-visible codegen + verify workflow</li>
           </ul>
         </div>
+        </div>
+        <p style="margin:12px 0 0;font-size:15px;color:var(--ink);">Principle: efficiency bugs are mostly structural and metric. Correctness still needs execution. Do not force one oracle to serve both.</p>
       </div>
-      <p style="padding:8px 4px 0;font-size:16px;">Principle: efficiency bugs are mostly structural and metric. Correctness still needs execution. Do not force one oracle to serve both.</p>
       <div class="foot"><span>Embedded Coder  ·  Code Efficiency  ·  Internal</span><span>11 / 20</span></div>
     </section>`
   },
@@ -457,12 +459,15 @@ const slides = [
 const viewport = document.getElementById("viewport");
 const notesEl = document.getElementById("notes");
 const counter = document.getElementById("counter");
-let i = 0;
+let i = Math.max(0, Math.min(slides.length - 1, parseInt(new URLSearchParams(location.search).get("s") || "1", 10) - 1 || 0));
 function render() {
   viewport.innerHTML = slides[i].html;
   viewport.querySelector(".slide")?.classList.add("active");
   notesEl.textContent = "Notes: " + slides[i].notes;
   counter.textContent = (i + 1) + " / " + slides.length;
+  const u = new URL(location.href);
+  u.searchParams.set("s", String(i + 1));
+  history.replaceState(null, "", u);
 }
 document.getElementById("prev").onclick = () => { i = (i + slides.length - 1) % slides.length; render(); };
 document.getElementById("next").onclick = () => { i = (i + 1) % slides.length; render(); };

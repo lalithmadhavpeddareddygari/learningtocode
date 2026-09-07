@@ -7,7 +7,7 @@ Internal QE deck for the Embedded Coder **Code Efficiency** team: industry resea
 | File | Use |
 | --- | --- |
 | `Integration_Testing_Market_Research.pptx` | Present in PowerPoint / Teams |
-| `index.html` | Present in a browser (arrow keys; Speaker notes button) |
+| `index.html` | Present in a browser (arrow keys; Speaker notes). Jump with `?s=19` |
 | `SPEAKER_NOTES.md` | Talking points, timing, likely questions |
 | `generate_pptx.py` | Regenerates the `.pptx` (`python3 generate_pptx.py`) |
 
